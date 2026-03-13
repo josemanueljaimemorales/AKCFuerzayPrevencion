@@ -1,45 +1,84 @@
 
 let data=[]
-let currentDay=null
-let currentType=null
+let baseDate = new Date('2025-03-17')
 
 async function loadExcel(){
 
-const response=await fetch('AKC.xlsx')
-const arrayBuffer=await response.arrayBuffer()
+const response = await fetch('AKC.xlsx')
+const buffer = await response.arrayBuffer()
 
-const workbook=XLSX.read(arrayBuffer)
-const sheet=workbook.Sheets[workbook.SheetNames[0]]
-data=XLSX.utils.sheet_to_json(sheet)
+const workbook = XLSX.read(buffer)
+const sheet = workbook.Sheets[workbook.SheetNames[0]]
+data = XLSX.utils.sheet_to_json(sheet)
 
-createApparatusButtons()
-createOrientacion()
 }
 
-function showSection(type){
+function getCycleWeek(){
 
-currentType=type
+const now = new Date()
+const diff = Math.floor((now-baseDate)/(1000*60*60*24*7))
+
+const pattern=[1,2,3,2]
+
+return pattern[diff % pattern.length]
+
+}
+
+function openSection(type){
+
 hideAll()
 
-if(type==='fuerza')document.getElementById('menu-fuerza').classList.remove('hidden')
-if(type==='preventivos')document.getElementById('menu-preventivos').classList.remove('hidden')
-if(type==='drills')document.getElementById('menu-drills').classList.remove('hidden')
-if(type==='orientacion')document.getElementById('menu-orientacion').classList.remove('hidden')
+if(type==="Fuerza" || type==="Preventivo"){
+
+const days = type==="Fuerza" ? ["Lunes","Miercoles","Viernes"] : ["Jueves"]
+
+const menu=document.getElementById("menu")
+menu.innerHTML=""
+
+days.forEach(d=>{
+
+const btn=document.createElement("button")
+btn.innerText=d
+btn.onclick=()=>showRoutine(type,d)
+
+menu.appendChild(btn)
+
+})
+
+menu.classList.remove("hidden")
 
 }
 
-function loadDay(day){
+else if(type==="Drill" || type==="F ESP APA"){
 
-currentDay=day
-document.getElementById('routineTitle').innerText=day
+const menu=document.getElementById("menu")
+menu.innerHTML=""
 
-hideAll()
-document.getElementById('routine').classList.remove('hidden')
+const aparatos=[...new Set(data.filter(r=>r.Tipo===type).map(r=>r.Aparato))]
 
-renderRoutine()
+aparatos.forEach(a=>{
+
+const btn=document.createElement("button")
+btn.innerText=a
+btn.onclick=()=>showApparatus(type,a)
+
+menu.appendChild(btn)
+
+})
+
+menu.classList.remove("hidden")
+
 }
 
-function convertYoutube(url){
+else if(type==="Orientacion"){
+
+showOrientation()
+
+}
+
+}
+
+function convert(url){
 
 if(!url) return ""
 
@@ -54,28 +93,53 @@ return "https://www.youtube.com/embed/"+id
 }
 
 return url
+
 }
 
-function renderRoutine(){
+function showRoutine(type,day){
 
-const week=document.getElementById('weekSelector').value
-const container=document.getElementById('exerciseList')
+hideAll()
+
+const week=getCycleWeek()
+
+const rows=data.filter(r=>r.Tipo===type && r.Dia===day && String(r.Semana)===String(week))
+
+render(rows,day+" - Semana "+week)
+
+}
+
+function showApparatus(type,app){
+
+hideAll()
+
+const rows=data.filter(r=>r.Tipo===type && r.Aparato===app)
+
+render(rows,app)
+
+}
+
+function showOrientation(){
+
+hideAll()
+
+const rows=data.filter(r=>r.Tipo==="Orientacion")
+
+render(rows,"Orientación")
+
+}
+
+function render(rows,title){
+
+document.getElementById("title").innerText=title
+
+const container=document.getElementById("list")
 container.innerHTML=""
 
-const filtered=data.filter(r=>{
+rows.forEach(r=>{
 
-if(currentType==='fuerza') return r.Tipo==='Fuerza' && r.Dia===currentDay && String(r.Semana)===week
-if(currentType==='preventivos') return r.Tipo==='Preventivo' && r.Dia===currentDay && String(r.Semana)===week
-
-return false
-
-})
-
-filtered.forEach(r=>{
+const video=convert(r.Link)
 
 const div=document.createElement("div")
-
-const video=convertYoutube(r.Link)
 
 div.innerHTML=`
 <h3>${r.Ejercicio}</h3>
@@ -87,96 +151,20 @@ container.appendChild(div)
 
 })
 
-}
-
-function createApparatusButtons(){
-
-const container=document.getElementById('apparatusButtons')
-container.innerHTML=""
-
-const apparatus=[...new Set(data.filter(r=>r.Tipo==='Drill').map(r=>r.Aparato))]
-
-apparatus.forEach(a=>{
-
-const btn=document.createElement("button")
-btn.innerText=a
-
-btn.onclick=()=>showDrills(a)
-
-container.appendChild(btn)
-
-})
-
-}
-
-function showDrills(app){
-
-hideAll()
-
-document.getElementById('routine').classList.remove('hidden')
-document.getElementById('routineTitle').innerText=app+" - Drills"
-
-const container=document.getElementById('exerciseList')
-container.innerHTML=""
-
-const drills=data.filter(r=>r.Tipo==='Drill' && r.Aparato===app)
-
-drills.forEach(r=>{
-
-const video=convertYoutube(r.Link)
-
-const div=document.createElement("div")
-
-div.innerHTML=`
-<h3>${r.Ejercicio}</h3>
-<iframe src="${video}" allowfullscreen></iframe>
-`
-
-container.appendChild(div)
-
-})
-
-}
-
-function createOrientacion(){
-
-const container=document.getElementById('orientacionList')
-container.innerHTML=""
-
-const orient=data.filter(r=>r.Tipo==='Orientacion')
-
-orient.forEach(r=>{
-
-const video=convertYoutube(r.Link)
-
-const div=document.createElement("div")
-
-div.innerHTML=`
-<h3>${r.Ejercicio}</h3>
-<iframe src="${video}" allowfullscreen></iframe>
-`
-
-container.appendChild(div)
-
-})
+document.getElementById("routine").classList.remove("hidden")
 
 }
 
 function hideAll(){
 
-document.getElementById('home').classList.add('hidden')
-document.getElementById('menu-fuerza').classList.add('hidden')
-document.getElementById('menu-preventivos').classList.add('hidden')
-document.getElementById('menu-drills').classList.add('hidden')
-document.getElementById('menu-orientacion').classList.add('hidden')
-document.getElementById('routine').classList.add('hidden')
+document.getElementById("menu").classList.add("hidden")
+document.getElementById("routine").classList.add("hidden")
 
 }
 
 function goHome(){
 
 hideAll()
-document.getElementById('home').classList.remove('hidden')
 
 }
 
