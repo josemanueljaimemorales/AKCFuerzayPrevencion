@@ -2,7 +2,7 @@
 let data=[]
 let baseDate = new Date('2025-03-17')
 
-async function loadExcel(){
+async function window.onload = loadExcel{
 
 const response = await fetch('AKC.xlsx')
 const buffer = await response.arrayBuffer()
