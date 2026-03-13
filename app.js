@@ -1,26 +1,28 @@
 
 let data=[]
-let baseDate = new Date('2025-03-17')
+let baseDate=new Date('2025-03-17')
 
-async function window.onload = loadExcel{
+async function loadExcel(){
 
-const response = await fetch('AKC.xlsx')
-const buffer = await response.arrayBuffer()
+const response=await fetch('AKC.xlsx')
+const buffer=await response.arrayBuffer()
 
-const workbook = XLSX.read(buffer)
-const sheet = workbook.Sheets[workbook.SheetNames[0]]
-data = XLSX.utils.sheet_to_json(sheet)
+const workbook=XLSX.read(buffer)
+const sheet=workbook.Sheets[workbook.SheetNames[0]]
+data=XLSX.utils.sheet_to_json(sheet)
+
+console.log("Excel cargado",data.length)
 
 }
 
 function getCycleWeek(){
 
-const now = new Date()
-const diff = Math.floor((now-baseDate)/(1000*60*60*24*7))
+const now=new Date()
+const diff=Math.floor((now-baseDate)/(1000*60*60*24*7))
 
 const pattern=[1,2,3,2]
 
-return pattern[diff % pattern.length]
+return pattern[diff%pattern.length]
 
 }
 
@@ -28,9 +30,9 @@ function openSection(type){
 
 hideAll()
 
-if(type==="Fuerza" || type==="Preventivo"){
+if(type==="Fuerza"||type==="Preventivo"){
 
-const days = type==="Fuerza" ? ["Lunes","Miercoles","Viernes"] : ["Jueves"]
+const days=type==="Fuerza"?["Lunes","Miercoles","Viernes"]:["Jueves"]
 
 const menu=document.getElementById("menu")
 menu.innerHTML=""
@@ -49,7 +51,7 @@ menu.classList.remove("hidden")
 
 }
 
-else if(type==="Drill" || type==="F ESP APA"){
+else if(type==="Drill"||type==="F ESP APA"){
 
 const menu=document.getElementById("menu")
 menu.innerHTML=""
@@ -80,7 +82,7 @@ showOrientation()
 
 function convert(url){
 
-if(!url) return ""
+if(!url)return ""
 
 if(url.includes("shorts")){
 const id=url.split("/shorts/")[1].split("?")[0]
@@ -102,7 +104,7 @@ hideAll()
 
 const week=getCycleWeek()
 
-const rows=data.filter(r=>r.Tipo===type && r.Dia===day && String(r.Semana)===String(week))
+const rows=data.filter(r=>r.Tipo===type&&r.Dia===day&&String(r.Semana)===String(week))
 
 render(rows,day+" - Semana "+week)
 
@@ -112,7 +114,7 @@ function showApparatus(type,app){
 
 hideAll()
 
-const rows=data.filter(r=>r.Tipo===type && r.Aparato===app)
+const rows=data.filter(r=>r.Tipo===type&&r.Aparato===app)
 
 render(rows,app)
 
@@ -137,13 +139,13 @@ container.innerHTML=""
 
 rows.forEach(r=>{
 
-const video=convert(r.Link)
+const video=convert(r.Link||"")
 
 const div=document.createElement("div")
 
 div.innerHTML=`
-<h3>${r.Ejercicio}</h3>
-<p>${r.Series||''} x ${r.Reps||''} | Peso: ${r.Peso||''}</p>
+<h3>${r.Ejercicio||""}</h3>
+<p>${r.Series||""} x ${r.Reps||""} | Peso: ${r.Peso||""}</p>
 <iframe src="${video}" allowfullscreen></iframe>
 `
 
@@ -168,4 +170,4 @@ hideAll()
 
 }
 
-loadExcel()
+window.onload=loadExcel
